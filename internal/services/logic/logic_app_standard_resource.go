@@ -220,6 +220,12 @@ func resourceLogicAppStandard() *pluginsdk.Resource {
 					},
 				},
 			},
+
+			"node_version": {
+				Type:     pluginsdk.TypeString,
+				Optional: true,
+				Default:  "~14",
+			},
 		},
 	}
 }
@@ -542,6 +548,8 @@ func resourceLogicAppStandardRead(d *pluginsdk.ResourceData, meta interface{}) e
 
 	d.Set("version", appSettings["FUNCTIONS_EXTENSION_VERSION"])
 
+	d.Set("node_version", appSettings["WEBSITE_NODE_DEFAULT_VERSION"])
+
 	if _, ok := appSettings["AzureFunctionsJobHost__extensionBundle__id"]; ok {
 		d.Set("use_extension_bundle", true)
 		if val, ok := appSettings["AzureFunctionsJobHost__extensionBundle__version"]; ok {
@@ -564,6 +572,8 @@ func resourceLogicAppStandardRead(d *pluginsdk.ResourceData, meta interface{}) e
 	delete(appSettings, "AzureWebJobsStorage")
 	delete(appSettings, "FUNCTIONS_EXTENSION_VERSION")
 	delete(appSettings, "WEBSITE_CONTENTSHARE")
+	delete(appSettings, "FUNCTIONS_WORKER_RUNTIME")
+	delete(appSettings, "WEBSITE_NODE_DEFAULT_VERSION")
 
 	if err = d.Set("app_settings", appSettings); err != nil {
 		return err
@@ -618,6 +628,10 @@ func getBasicLogicAppSettings(d *pluginsdk.ResourceData, endpointSuffix string) 
 	contentFileConnStringPropName := "WEBSITE_CONTENTAZUREFILECONNECTIONSTRING"
 	appKindPropName := "APP_KIND"
 	appKindPropValue := "workflowApp"
+	workerRuntimeName := "FUNCTIONS_WORKER_RUNTIME"
+	workerRuntimeValue := "node"
+	nodeDefaultVersionName := "WEBSITE_NODE_DEFAULT_VERSION"
+	nodeDefaultVersionValue := d.Get("node_version").(string)
 
 	storageAccount := d.Get("storage_account_name").(string)
 	accountKey := d.Get("storage_account_access_key").(string)
@@ -635,6 +649,8 @@ func getBasicLogicAppSettings(d *pluginsdk.ResourceData, endpointSuffix string) 
 		{Name: &appKindPropName, Value: &appKindPropValue},
 		{Name: &contentSharePropName, Value: &contentShare},
 		{Name: &contentFileConnStringPropName, Value: &storageConnection},
+		{Name: &workerRuntimeName, Value: &workerRuntimeValue},
+		{Name: &nodeDefaultVersionName, Value: &nodeDefaultVersionValue},
 	}
 
 	useExtensionBundle := d.Get("use_extension_bundle").(bool)
